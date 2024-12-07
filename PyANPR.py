@@ -1,4 +1,6 @@
 import cv2
+from skimage.measure import shannon_entropy
+import numpy as np
 
 class PyANPR:
     """
@@ -35,7 +37,7 @@ class PyANPR:
         """
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    def clahe(image, clip_limit=2.0, tile_grid_size=(8, 8)):
+    def clahe(image, clip_limit=2.0, tile_grid_size=(10, 10)):
         """
         Apply Contrast Limited Adaptive Histogram Equalization
 
@@ -86,7 +88,7 @@ class PyANPR:
         edges = cv2.Canny(blur, threshold1=thres1, threshold2=thres2)
         return edges
 
-    def crop_roi(image, x, y, w, h, m=15):
+    def crop_roi(image, x, y, w, h, m=5):
         """
         To crop region of interest in our image, a 15 margin of pixel is given by default
 
@@ -112,3 +114,17 @@ class PyANPR:
         roi = image[start_y:end_y, start_x:end_x]
         return roi, start_y, end_y, start_x, end_x
 
+    def compute_stats(image):
+        mean = image.mean()
+        std_dev = image.std()
+        entropy = shannon_entropy(image)
+        return mean, std_dev, entropy
+
+    def calculate_psnr(original, processed):
+        # Ensure both images are of the same size
+        mse = np.mean((original - processed) ** 2)
+        if mse == 0:
+            return float('inf')  # Perfect match
+        max_pixel = 255.0  # Assuming 8-bit image
+        psnr = 10 * np.log10((max_pixel ** 2) / mse)
+        return psnr
